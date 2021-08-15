@@ -1,5 +1,6 @@
 #include <iostream>
 using namespace std;
+// ข้อ 3 สร้างสี่เหลี่ยม
 
 void firstandlast(int n){
     for(int z=0; z<n; z++){
@@ -7,6 +8,7 @@ void firstandlast(int n){
     }
         cout << endl;
 }
+
 int main(){
     int n;
     cin >> n;
@@ -32,6 +34,5 @@ int main(){
 
     firstandlast(n);
     
-   
     return 0;
 }
