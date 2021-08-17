@@ -9,13 +9,16 @@ int sum(string x){
     }
     cout << total << endl;
 
-    int total2=0;
-    
-    while(total!=0){
-        total2= total2 + total % 10;
-        total= total / 10;
+    if(total >9){
+        int total2=0;
+        
+        while(total!=0){
+            total2= total2 + total % 10;
+            total= total / 10;
+        }
+        cout << total2 << endl;
     }
-    cout << total2 << endl;
+    
 
     return 0;
 }
