@@ -18,24 +18,10 @@ int main ()
     S = s*(s-a)*(s-b)*(s-c);
     cout << "S= " << S << endl;
     // #2
-    if (a + b > c) 
-    {
-        if (a + c > b) 
-        {
-            if (b + c > a) 
-            {
-                cout << "The area of the triangle is " << sqrt(S) << endl; // #3
-            }
-            else 
-            { 
-                cout << "0 ";
-            }
-        }
-        else 
-        { 
-            cout << "0"; 
-        }
-    }
+    if ((a + b > c)  && (a+c > b) && (b + c > a) ) 
+    {  
+        cout << "The area of the triangle is " << sqrt(S) << endl; // #3
+    } 
     else 
     { 
        cout << "0 ";
