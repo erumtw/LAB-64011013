@@ -54,6 +54,7 @@ void menuascii();
 void modepage();
 void gameoverpage();
 void howtoplaypage();
+void gameplaypage();
 //food
 #define count 100
 COORD food[count];
@@ -70,8 +71,8 @@ int Tlenght;
 
 bool GameOn = true, mainmenu, modemenu, normalMode, obstructMode, play, Gameover = false, howtoplay;
 float speed;
-int score;
-int mainpy = 15, modepy = 11, gameoverpy = 17;
+int score,obHighscore;
+int mainpy = 15, modepy = 11, gameoverpy = 16;
 
 int main()
 {
@@ -83,6 +84,8 @@ int main()
 			control_setting();
 			clear_buffer();
 			howtoplaypage();
+			consoleBuffer[40 + screen_x * 23].Char.AsciiChar = '<';
+			consoleBuffer[40 + screen_x * 23].Attributes = 3;;
 			fill_buffer_to_console();
 			Sleep(160);
 		}
@@ -111,13 +114,13 @@ int main()
 			control_setting();
 			clear_buffer();
 			modepage();
-			consoleBuffer[37 + screen_x * modepy].Char.AsciiChar = '<';
-			consoleBuffer[37 + screen_x * modepy].Attributes = 3;
+			consoleBuffer[39 + screen_x * modepy].Char.AsciiChar = '<';
+			consoleBuffer[39 + screen_x * modepy].Attributes = 3;
 			fill_buffer_to_console();
 			Sleep(160);
 		}
-		while(normalMode == true)
-		{	
+		while (normalMode == true)
+		{
 			normalModegame();
 		}
 	}
@@ -152,10 +155,11 @@ void game_setup()
 void normalModegame()
 {
 	control_setting(); // w a s d f
+	addbody();
 	clear_buffer(); // clear
 	scorecount();
+	gameplaypage();
 	board();
-	addbody();
 	oji_move();
 	eatcheck();
 	selfhits();
@@ -195,7 +199,7 @@ void control_setting()
 					else if (eventBuffer[i].Event.KeyEvent.uChar.AsciiChar == 'd' && dir != 3) {
 						dir = 4;
 					}
-					else if (eventBuffer[i].Event.KeyEvent.uChar.AsciiChar == 'f'){
+					else if (eventBuffer[i].Event.KeyEvent.uChar.AsciiChar == 'f') {
 						dir = 0;
 					}
 				}
@@ -271,8 +275,16 @@ void control_setting()
 				{
 					if (eventBuffer[i].Event.KeyEvent.wVirtualKeyCode == VK_RETURN)
 					{
-							mainmenu = true;
-							Gameover = false;
+						mainmenu = true;
+						Gameover = false;
+					}
+				}
+				else if (howtoplay == true)
+				{
+					if (eventBuffer[i].Event.KeyEvent.wVirtualKeyCode == VK_RETURN)
+					{
+						mainmenu = true;
+						howtoplay = false;
 					}
 				}
 			}
@@ -352,13 +364,14 @@ void initfood()
 		SHORT y = 1 + (rand() % (hy - 2));
 		for (int j = 0; j < Tlenght; j++)
 		{
-			while (x == oji[j].X && y == oji[j].Y)
+			if (x == oji[j].X && y == oji[j].Y)
 			{
-				SHORT x = 1 + (rand() % (wx - 2));
-				SHORT y = 1 + (rand() % (hy - 2));
+				x = 1 + (rand() % (wx - 2));
+				y = 1 + (rand() % (hy - 2));
 			}
+			else
+				food[i] = { x, y };
 		}
-		food[i] = { x, y };
 	}
 
 	/*
@@ -388,7 +401,19 @@ void initwall()
 		{
 			SHORT x = 2 + (rand() % (wx - 3));
 			SHORT y = 2 + (rand() % (hy - 4));
-			wall[i] = { x, y };
+			for (int j = 0; j < Tlenght; j++)
+			{
+				for (int k = 0; k < foodcount; k++)
+				{
+					if (x == oji[j].X && y == oji[j].Y && x == food[k].X && y == food[k].Y && (x - oji[0].X < 4) & (y - oji[0].Y < 4))
+					{
+						x = 1 + (rand() % (wx - 2));
+						y = 1 + (rand() % (hy - 2));
+					}
+					else
+						wall[i] = { x, y };
+				}
+			}
 		}
 	}
 }
@@ -405,67 +430,67 @@ void fill_oji()
 	for (int i = 0; i < Tlenght; i++)
 	{
 		consoleBuffer[oji[i].X + screen_x * oji[i].Y].Char.AsciiChar = '@';
-		if(i == 0)
-			consoleBuffer[oji[i].X + screen_x * oji[i].Y].Attributes = 7;
+		if (i == 0)
+			consoleBuffer[oji[i].X + screen_x * oji[i].Y].Attributes = 15;
 		else
-			consoleBuffer[oji[i].X + screen_x * oji[i].Y].Attributes = 8;
+			consoleBuffer[oji[i].X + screen_x * oji[i].Y].Attributes = 7;
 	}
 }
 
 void oji_move()
 {
-		if(dir == 1){
-			if (oji[0].Y > 1)
-			{
-				oji[0] = { oji[0].X, oji[0].Y - 1 };
-				Sleep(speed/2);
-			}
-			else {
-				Sleep(250);
-				Gameover = true;
-				normalMode = false;
-				play = false;
-				//game_setup();
-			}
+	if (dir == 1) {
+		if (oji[0].Y > 1)
+		{
+			oji[0] = { oji[0].X, oji[0].Y - 1 };
+			Sleep(speed / 2);
 		}
-		else if (dir == 2) {
-			if (oji[0].Y < height - 2)
-			{
-				oji[0] = { oji[0].X, oji[0].Y + 1 };
-				Sleep(speed/2);
-			}
-			else {
-				Sleep(250);
-				Gameover = true;
-				normalMode = false;
-				play = false;
-				//game_setup();
-			}
+		else {
+			Sleep(250);
+			Gameover = true;
+			normalMode = false;
+			play = false;
+			//game_setup();
 		}
+	}
+	else if (dir == 2) {
+		if (oji[0].Y < height - 2)
+		{
+			oji[0] = { oji[0].X, oji[0].Y + 1 };
+			Sleep(speed / 2);
+		}
+		else {
+			Sleep(250);
+			Gameover = true;
+			normalMode = false;
+			play = false;
+			//game_setup();
+		}
+	}
 
-		else if (dir == 3) {
-			if (oji[0].X > 1)
-				oji[0] = { oji[0].X - 1, oji[0].Y };
-			else {
-				Sleep(250);
-				Gameover = true;
-				normalMode = false;
-				play = false;
-				//game_setup();
-			}
+	else if (dir == 3) {
+		if (oji[0].X > 1)
+			oji[0] = { oji[0].X - 1, oji[0].Y };
+		else {
+			Sleep(250);
+			Gameover = true;
+			normalMode = false;
+			play = false;
+			//game_setup();
 		}
+	}
 
-		else if (dir == 4) {
-			if (oji[0].X < width - 2)
-				oji[0] = { oji[0].X + 1, oji[0].Y };
-			else {
-				Sleep(250);
-				Gameover = true;
-				normalMode = false;
-				play = false;
-				//game_setup();
-			}
+	else if (dir == 4) {
+		if (oji[0].X < width - 2)
+			oji[0] = { oji[0].X + 1, oji[0].Y };
+		else {
+			Sleep(250);
+			Gameover = true;
+			normalMode = false;
+			play = false;
+			//game_setup();
 		}
+	}
 }
 
 void board()
@@ -474,7 +499,7 @@ void board()
 	{
 		for (int j = 0; j < width; j++) // column
 		{
-			if (i == 0 || i == height - 1  || j == 0 || j == width - 1 )
+			if (i == 0 || i == height - 1 || j == 0 || j == width - 1)
 			{
 				consoleBuffer[j + screen_x * i].Char.AsciiChar = '#';
 				consoleBuffer[j + screen_x * i].Attributes = 10;
@@ -557,7 +582,6 @@ void addbody()
 	}
 }
 
-
 void myname()
 {
 	const char* nametext = "64011013 AMREE THAOWAN";
@@ -570,23 +594,135 @@ void myname()
 	}
 }
 
+void gameplaypage()
+{
+	const char* a1 = "OJI'S";
+	const char* mode11 = "MODE : CHALLENGE";
+	const char* mode12 = "DO THE HIGHEST SCORE";
+	const char* mode21 = "MODE : OBSTRUCTION";
+	const char* mode22 = "DON'T HIT #";
+	const char* l1 = "* = 10 point";
+	const char* l2 = "# = Obstruction / Wall";
+	const char* l3 = "? = Random item";
+	if (wallstat == false) // challenge mode
+	{
+		int py = 2;
+		for (size_t i = 0; i < strlen(a1); i++)
+		{
+			consoleBuffer[30 + (((30 - strlen(a1)) / 2) + i) + screen_x * (py+0)].Char.AsciiChar = a1[i];
+			consoleBuffer[30 + (((30 - strlen(a1)) / 2) + i) + screen_x * (py + 0)].Attributes = 10;
+		}
+
+		for (size_t i = 0; i < strlen(mode11); i++)
+		{
+			consoleBuffer[30 + (((30 - strlen(mode11)) / 2) + i) + screen_x * (py + 2)].Char.AsciiChar = mode11[i];
+			if(i < 5)
+				consoleBuffer[30 + (((30 - strlen(mode11)) / 2) + i) + screen_x * (py + 2)].Attributes = 15;
+			else
+				consoleBuffer[30 + (((30 - strlen(mode11)) / 2) + i) + screen_x * (py + 2)].Attributes = 7;
+		}
+		
+		for (size_t i = 0; i < strlen(mode12); i++)
+		{
+			consoleBuffer[30 + (((30 - strlen(mode12)) / 2) + i) + screen_x * (py + 4)].Char.AsciiChar = mode12[i];
+			consoleBuffer[30 + (((30 - strlen(mode12)) / 2) + i) + screen_x * (py + 4)].Attributes = 7;
+		}
+		
+		for (size_t i = 0; i < strlen(l1); i++)
+		{
+			consoleBuffer[30 + (((30 - strlen(l2)) / 2) + i) + screen_x * 15].Char.AsciiChar = l1[i];
+			if (i == 0)
+				consoleBuffer[30 + (((30 - strlen(l2)) / 2) + i) + screen_x * 15].Attributes = 4;
+			else
+				consoleBuffer[30 + (((30 - strlen(l2)) / 2) + i) + screen_x * 15].Attributes = 7;
+		}
+		
+		for (size_t i = 0; i < strlen(l2); i++)
+		{
+			consoleBuffer[30 + (((30 - strlen(l2)) / 2) + i) + screen_x * 16].Char.AsciiChar = l2[i];
+			if (i == 0)
+				consoleBuffer[30 + (((30 - strlen(l2)) / 2) + i) + screen_x * 16].Attributes = 10;
+			else
+				consoleBuffer[30 + (((30 - strlen(l2)) / 2) + i) + screen_x * 16].Attributes = 7;
+		}
+
+		for (size_t i = 0; i < strlen(l3); i++)
+		{
+			consoleBuffer[30 + (((30 - strlen(l2)) / 2) + i) + screen_x * 17].Char.AsciiChar = l3[i];
+			consoleBuffer[30 + (((30 - strlen(l2)) / 2) + i) + screen_x * 17].Attributes = 7;
+		}
+	}
+	else //obstruction mode
+	{
+		int py = 2;
+		for (size_t i = 0; i < strlen(a1); i++)
+		{
+			consoleBuffer[30 + (((30 - strlen(a1)) / 2) + i) + screen_x * (py + 0)].Char.AsciiChar = a1[i];
+			consoleBuffer[30 + (((30 - strlen(a1)) / 2) + i) + screen_x * (py + 0)].Attributes = 10;
+		}
+
+		for (size_t i = 0; i < strlen(mode21); i++)
+		{
+			consoleBuffer[30 + (((30 - strlen(mode21)) / 2) + i) + screen_x * (py + 2)].Char.AsciiChar = mode21[i];
+			if (i < 5)
+				consoleBuffer[30 + (((30 - strlen(mode21)) / 2) + i) + screen_x * (py + 2)].Attributes = 15;
+			else
+				consoleBuffer[30 + (((30 - strlen(mode21)) / 2) + i) + screen_x * (py + 2)].Attributes = 7;
+		}
+
+		for (size_t i = 0; i < strlen(mode22); i++)
+		{
+			consoleBuffer[30 + (((30 - strlen(mode22)) / 2) + i) + screen_x * (py + 4)].Char.AsciiChar = mode22[i];
+			if (i == 10)
+				consoleBuffer[30 + (((30 - strlen(mode22)) / 2) + i) + screen_x * (py + 4)].Attributes = 10;
+			else
+				consoleBuffer[30 + (((30 - strlen(mode22)) / 2) + i) + screen_x * (py + 4)].Attributes = 7;
+		}
+
+		for (size_t i = 0; i < strlen(l1); i++)
+		{
+			consoleBuffer[30 + (((30 - strlen(l2)) / 2) + i) + screen_x * 15].Char.AsciiChar = l1[i];
+			if (i == 0)
+				consoleBuffer[30 + (((30 - strlen(l2)) / 2) + i) + screen_x * 15].Attributes = 4;
+			else
+				consoleBuffer[30 + (((30 - strlen(l2)) / 2) + i) + screen_x * 15].Attributes = 7;
+		}
+
+		for (size_t i = 0; i < strlen(l2); i++)
+		{
+			consoleBuffer[30 + (((30 - strlen(l2)) / 2) + i) + screen_x * 16].Char.AsciiChar = l2[i];
+			if (i == 0)
+				consoleBuffer[30 + (((30 - strlen(l2)) / 2) + i) + screen_x * 16].Attributes = 10;
+			else
+				consoleBuffer[30 + (((30 - strlen(l2)) / 2) + i) + screen_x * 16].Attributes = 7;
+		}
+
+		for (size_t i = 0; i < strlen(l3); i++)
+		{
+			consoleBuffer[30 + (((30 - strlen(l2)) / 2) + i) + screen_x * 17].Char.AsciiChar = l3[i];
+			consoleBuffer[30 + (((30 - strlen(l2)) / 2) + i) + screen_x * 17].Attributes = 7;
+		}
+	}
+}
+
 void scorecount()
-{	
+{
+
 	const char* scoretext = "SCORE = ";
-	SHORT px = 40;
-	SHORT py = 18;
+	string s = to_string(score);
+	const char* nchar = s.c_str();
+	SHORT px = 39;
+	SHORT py = 9;
+
 	for (size_t i = 0; i < strlen(scoretext); i++)
 	{
 		consoleBuffer[(px + i) + screen_x * py].Char.AsciiChar = scoretext[i];
-		consoleBuffer[(px + i) + screen_x * py].Attributes = 7;
+		consoleBuffer[(px + i) + screen_x * py].Attributes = 15;
 	}
-
-	string s = to_string(score);
-	const char* nchar = s.c_str();
 	for (size_t i = 0; i < 3; i++)
 	{
-		consoleBuffer[(48 + i) + screen_x * 18].Char.AsciiChar = nchar[i];
-		consoleBuffer[(48 + i) + screen_x * 18].Attributes = 7;
+		consoleBuffer[(47 + i) + screen_x * py].Char.AsciiChar = nchar[i];
+		consoleBuffer[(47 + i) + screen_x * py].Attributes = 2;
 	}
 }
 
@@ -608,35 +744,35 @@ void menuascii()
 	}
 	for (size_t i = 0; i < strlen(stext); i++)
 	{
-		consoleBuffer[(px + i) + screen_x * (py+1)].Char.AsciiChar = stext[i];
-		consoleBuffer[(px + i) + screen_x * (py+1)].Attributes = 10;
+		consoleBuffer[(px + i) + screen_x * (py + 1)].Char.AsciiChar = stext[i];
+		consoleBuffer[(px + i) + screen_x * (py + 1)].Attributes = 10;
 	}
 	for (size_t i = 0; i < strlen(dtext); i++)
 	{
-		consoleBuffer[(px + i) + screen_x * (py+2)].Char.AsciiChar = dtext[i];
-		consoleBuffer[(px + i) + screen_x * (py+2)].Attributes = 10;
+		consoleBuffer[(px + i) + screen_x * (py + 2)].Char.AsciiChar = dtext[i];
+		consoleBuffer[(px + i) + screen_x * (py + 2)].Attributes = 10;
 	}
 	for (size_t i = 0; i < strlen(gtext); i++)
 	{
-		consoleBuffer[(px + i) + screen_x * (py+3)].Char.AsciiChar = gtext[i];
-		consoleBuffer[(px + i) + screen_x * (py+3)].Attributes = 10;
+		consoleBuffer[(px + i) + screen_x * (py + 3)].Char.AsciiChar = gtext[i];
+		consoleBuffer[(px + i) + screen_x * (py + 3)].Attributes = 10;
 	}
 	for (size_t i = 0; i < strlen(htext); i++)
 	{
-		consoleBuffer[(px + i) + screen_x * (py+4)].Char.AsciiChar = htext[i];
-		consoleBuffer[(px + i) + screen_x * (py+4)].Attributes = 10;
+		consoleBuffer[(px + i) + screen_x * (py + 4)].Char.AsciiChar = htext[i];
+		consoleBuffer[(px + i) + screen_x * (py + 4)].Attributes = 10;
 	}
 	for (size_t i = 0; i < strlen(jtext); i++)
 	{
-		consoleBuffer[(px + i) + screen_x * (py+5)].Char.AsciiChar = jtext[i];
-		consoleBuffer[(px + i) + screen_x * (py+5)].Attributes = 10;
+		consoleBuffer[(px + i) + screen_x * (py + 5)].Char.AsciiChar = jtext[i];
+		consoleBuffer[(px + i) + screen_x * (py + 5)].Attributes = 10;
 	}
 
 	const char* a1 = "OJI's";
-	const char* start = "Start";
-	const char* leader = "Leaderboard";
-	const char* how = "How to play";
-	const char* Exits = "Exits";
+	const char* start = "START";
+	const char* leader = "LEADERBOARD";
+	const char* how = "HOW TO PLAY";
+	const char* Exits = "QUIT GAME";
 
 	for (size_t i = 0; i < strlen(a1); i++)
 	{
@@ -664,8 +800,8 @@ void menuascii()
 
 	for (size_t i = 0; i < strlen(Exits); i++)
 	{
-		consoleBuffer[(28 + i) + screen_x * (py + 18)].Char.AsciiChar = Exits[i];
-		consoleBuffer[(28 + i) + screen_x * (py + 18)].Attributes = 7;
+		consoleBuffer[(26 + i) + screen_x * (py + 18)].Char.AsciiChar = Exits[i];
+		consoleBuffer[(26 + i) + screen_x * (py + 18)].Attributes = 7;
 	}
 
 	const char* nametext = "By 64011013/T. AMREE";
@@ -681,66 +817,67 @@ void menuascii()
 void modepage()
 {
 	const char* b1 = "MODES";
-	const char* b2 = "Challenge";
-	const char* b3 = "Obstructions";
-	const char* b4 = "Return";
+	const char* b2 = "CHALLENGE";
+	const char* b3 = "OBSTRUCTION";
+	const char* b4 = "BACK TO MAIN MENU";
 	int py = 8;
 
 	for (size_t i = 0; i < strlen(b1); i++)
 	{
-		consoleBuffer[(27 + i) + screen_x * py].Char.AsciiChar = b1[i];
-		consoleBuffer[(27 + i) + screen_x * py].Attributes = 7;
+		consoleBuffer[(((60 - strlen(b1)) / 2) + i) + screen_x * py].Char.AsciiChar = b1[i];
+		consoleBuffer[(((60 - strlen(b1)) / 2) + i) + screen_x * py].Attributes = 7;
 	}
 
 	for (size_t i = 0; i < strlen(b2); i++)
 	{
-		consoleBuffer[(25 + i) + screen_x * (py + 3)].Char.AsciiChar = b2[i];
-		consoleBuffer[(25 + i) + screen_x * (py + 3)].Attributes = 7;
+		consoleBuffer[(((60 - strlen(b2)) / 2) + i) + screen_x * (py + 3)].Char.AsciiChar = b2[i];
+		consoleBuffer[(((60 - strlen(b2)) / 2) + i) + screen_x * (py + 3)].Attributes = 7;
 	}
 
 	for (size_t i = 0; i < strlen(b3); i++)
 	{
-		consoleBuffer[(24 + i) + screen_x * (py + 5)].Char.AsciiChar = b3[i];
-		consoleBuffer[(24 + i) + screen_x * (py + 5)].Attributes = 7;
+		consoleBuffer[(((60 - strlen(b3)) / 2) + i) + screen_x * (py + 5)].Char.AsciiChar = b3[i];
+		consoleBuffer[(((60 - strlen(b3)) / 2) + i) + screen_x * (py + 5)].Attributes = 7;
 	}
 
 	for (size_t i = 0; i < strlen(b4); i++)
 	{
-		consoleBuffer[(27 + i) + screen_x * (py + 7)].Char.AsciiChar = b4[i];
-		consoleBuffer[(27 + i) + screen_x * (py + 7)].Attributes = 7;
+		consoleBuffer[(((60 - strlen(b4)) / 2) + i) + screen_x * (py + 7)].Char.AsciiChar = b4[i];
+		consoleBuffer[(((60 - strlen(b4)) / 2) + i) + screen_x * (py + 7)].Attributes = 7;
 	}
 }
 
 void gameoverpage()
 {
-	SHORT py = 13;
-	const char* text1 = "GAME OVER!!!!";
-	const char* scoretext = " SCORE  = ";
+	SHORT py = 12;
+	const char* text1 = "GAME OVER!!";
+	const char* scoretext = "SCORE = ";
 	const char* text3 = "BACK TO MAIN MENU";
+	string s = to_string(score);
+	const char* nchar = s.c_str();
+
 	for (size_t i = 0; i < strlen(text1); i++)
 	{
-		consoleBuffer[(24 + i) + screen_x * (py - 4)].Char.AsciiChar = text1[i];
-		consoleBuffer[(24 + i) + screen_x * (py - 4)].Attributes = 4;
+		consoleBuffer[(((60 - strlen(text1)) / 2) + i) + screen_x * (py - 4)].Char.AsciiChar = text1[i];
+		consoleBuffer[(((60 - strlen(text1)) / 2) + i) + screen_x * (py - 4)].Attributes = 4;
 	}
 
 	for (size_t i = 0; i < strlen(scoretext); i++)
 	{
-		consoleBuffer[(24 + i) + screen_x * (py + 0)].Char.AsciiChar = scoretext[i];
-		consoleBuffer[(24 + i) + screen_x * (py + 0)].Attributes = 7;
+		consoleBuffer[(((60 - (strlen(scoretext) + strlen(nchar))) / 2) + i) + screen_x * (py + 0)].Char.AsciiChar = scoretext[i];
+		consoleBuffer[(((60 - (strlen(scoretext) + strlen(nchar))) / 2) + i) + screen_x * (py + 0)].Attributes = 7;
 	}
 
-	string s = to_string(score);
-	const char* nchar = s.c_str();
-	for (size_t i = 0; i < 3; i++)
+	for (size_t i = 0; i < strlen(nchar); i++)
 	{
-		consoleBuffer[(34 + i) + screen_x * (py + 0)].Char.AsciiChar = nchar[i];
-		consoleBuffer[(34 + i) + screen_x * (py + 0)].Attributes = 7;
+		consoleBuffer[strlen(scoretext) + (((60 - (strlen(scoretext) + strlen(nchar))) / 2) + i) + screen_x * (py + 0)].Char.AsciiChar = nchar[i];
+		consoleBuffer[strlen(scoretext) + (((60 - (strlen(scoretext) + strlen(nchar))) / 2) + i) + screen_x * (py + 0)].Attributes = 7;
 	}
 
 	for (size_t i = 0; i < strlen(text3); i++)
 	{
-		consoleBuffer[(22 + i) + screen_x * (py + 4)].Char.AsciiChar = text3[i];
-		consoleBuffer[(22 + i) + screen_x * (py + 4)].Attributes = 7;
+		consoleBuffer[(((60 - strlen(text3)) / 2) + i) + screen_x * (py + 4)].Char.AsciiChar = text3[i];
+		consoleBuffer[(((60 - strlen(text3)) / 2) + i) + screen_x * (py + 4)].Attributes = 7;
 	}
 }
 
@@ -755,9 +892,10 @@ void howtoplaypage()
 	const char* line4 = " a                         go left";
 	const char* line5 = "  d                         go right";
 	const char* line6 = " f                          pause";
+	const char* line7 = "BACK TO MAIN MENU";
 	for (size_t i = 0; i < strlen(topic); i++)
 	{
-		consoleBuffer[(((60 - strlen(topic))/2)+i) + screen_x * (py + 0)].Char.AsciiChar = topic[i];
+		consoleBuffer[(((60 - strlen(topic)) / 2) + i) + screen_x * (py + 0)].Char.AsciiChar = topic[i];
 		consoleBuffer[(((60 - strlen(topic)) / 2) + i) + screen_x * (py + 0)].Attributes = 7;
 	}
 
@@ -795,5 +933,11 @@ void howtoplaypage()
 	{
 		consoleBuffer[(((60 - strlen(line6)) / 2) + i) + screen_x * (py + 13)].Char.AsciiChar = line6[i];
 		consoleBuffer[(((60 - strlen(line6)) / 2) + i) + screen_x * (py + 13)].Attributes = 7;
+	}
+
+	for (size_t i = 0; i < strlen(line7); i++)
+	{
+		consoleBuffer[(((60 - strlen(line7)) / 2) + i) + screen_x * (py + 20)].Char.AsciiChar = line7[i];
+		consoleBuffer[(((60 - strlen(line7)) / 2) + i) + screen_x * (py + 20)].Attributes = 7;
 	}
 }
