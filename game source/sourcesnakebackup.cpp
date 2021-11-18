@@ -66,13 +66,17 @@ COORD wall[count];
 int wallcount;
 //Oji
 COORD oji[lenght];
-int dir; // w.1, s.2 , a.3, d.4 , 0 stop
 int Tlenght;
+enum directions {UP, DOWN, LEFT, RIGHT, STOP};
+directions dir;
+
 
 bool GameOn = true, mainmenu, modemenu, normalMode, obstructMode, play, Gameover = false, howtoplay;
 float speed;
-int score,obHighscore;
+int score, obHighscore;
 int mainpy = 15, modepy = 11, gameoverpy = 16;
+enum itemlist {SLOWER, ADDHP, SHORTER, DEWALL};
+itemlist items;
 
 int main()
 {
@@ -147,7 +151,7 @@ void game_setup()
 	initfood();
 	initwall();
 	Tlenght = 1;
-	dir = 0;
+	dir = STOP;
 	speed = 90;
 	score = 0;
 }
@@ -187,20 +191,20 @@ void control_setting()
 						play = false;
 						game_setup();
 					}
-					else if (eventBuffer[i].Event.KeyEvent.uChar.AsciiChar == 'w' && dir != 2) {
-						dir = 1;
+					else if (eventBuffer[i].Event.KeyEvent.uChar.AsciiChar == 'w' && dir != DOWN) {
+						dir = UP;
 					}
-					else if (eventBuffer[i].Event.KeyEvent.uChar.AsciiChar == 's' && dir != 1) {
-						dir = 2;
+					else if (eventBuffer[i].Event.KeyEvent.uChar.AsciiChar == 's' && dir != UP) {
+						dir = DOWN;
 					}
-					else if (eventBuffer[i].Event.KeyEvent.uChar.AsciiChar == 'a' && dir != 4) {
-						dir = 3;
+					else if (eventBuffer[i].Event.KeyEvent.uChar.AsciiChar == 'a' && dir != RIGHT) {
+						dir = LEFT;
 					}
-					else if (eventBuffer[i].Event.KeyEvent.uChar.AsciiChar == 'd' && dir != 3) {
-						dir = 4;
+					else if (eventBuffer[i].Event.KeyEvent.uChar.AsciiChar == 'd' && dir != LEFT) {
+						dir = RIGHT;
 					}
 					else if (eventBuffer[i].Event.KeyEvent.uChar.AsciiChar == 'f') {
-						dir = 0;
+						dir = STOP;
 					}
 				}
 				else if (mainmenu == true)
@@ -439,7 +443,7 @@ void fill_oji()
 
 void oji_move()
 {
-	if (dir == 1) {
+	if (dir == UP) {
 		if (oji[0].Y > 1)
 		{
 			oji[0] = { oji[0].X, oji[0].Y - 1 };
@@ -453,7 +457,7 @@ void oji_move()
 			//game_setup();
 		}
 	}
-	else if (dir == 2) {
+	else if (dir == DOWN) {
 		if (oji[0].Y < height - 2)
 		{
 			oji[0] = { oji[0].X, oji[0].Y + 1 };
@@ -468,7 +472,7 @@ void oji_move()
 		}
 	}
 
-	else if (dir == 3) {
+	else if (dir == LEFT) {
 		if (oji[0].X > 1)
 			oji[0] = { oji[0].X - 1, oji[0].Y };
 		else {
@@ -480,7 +484,7 @@ void oji_move()
 		}
 	}
 
-	else if (dir == 4) {
+	else if (dir == RIGHT) {
 		if (oji[0].X < width - 2)
 			oji[0] = { oji[0].X + 1, oji[0].Y };
 		else {
@@ -521,6 +525,7 @@ void eatcheck()
 			score += 10;
 			if (speed != 50)
 				speed -= 0.5;
+
 			if (wallstat == true)
 			{
 				atefood--;
@@ -564,7 +569,7 @@ void selfhits()
 int fposX, fposY, sposX, sposY;
 void addbody()
 {
-	if (dir != 0)
+	if (dir != STOP)
 	{
 		fposX = oji[1].X;
 		fposY = oji[1].Y;
@@ -609,25 +614,25 @@ void gameplaypage()
 		int py = 2;
 		for (size_t i = 0; i < strlen(a1); i++)
 		{
-			consoleBuffer[30 + (((30 - strlen(a1)) / 2) + i) + screen_x * (py+0)].Char.AsciiChar = a1[i];
+			consoleBuffer[30 + (((30 - strlen(a1)) / 2) + i) + screen_x * (py + 0)].Char.AsciiChar = a1[i];
 			consoleBuffer[30 + (((30 - strlen(a1)) / 2) + i) + screen_x * (py + 0)].Attributes = 10;
 		}
 
 		for (size_t i = 0; i < strlen(mode11); i++)
 		{
 			consoleBuffer[30 + (((30 - strlen(mode11)) / 2) + i) + screen_x * (py + 2)].Char.AsciiChar = mode11[i];
-			if(i < 5)
+			if (i < 5)
 				consoleBuffer[30 + (((30 - strlen(mode11)) / 2) + i) + screen_x * (py + 2)].Attributes = 15;
 			else
 				consoleBuffer[30 + (((30 - strlen(mode11)) / 2) + i) + screen_x * (py + 2)].Attributes = 7;
 		}
-		
+
 		for (size_t i = 0; i < strlen(mode12); i++)
 		{
 			consoleBuffer[30 + (((30 - strlen(mode12)) / 2) + i) + screen_x * (py + 4)].Char.AsciiChar = mode12[i];
 			consoleBuffer[30 + (((30 - strlen(mode12)) / 2) + i) + screen_x * (py + 4)].Attributes = 7;
 		}
-		
+
 		for (size_t i = 0; i < strlen(l1); i++)
 		{
 			consoleBuffer[30 + (((30 - strlen(l2)) / 2) + i) + screen_x * 15].Char.AsciiChar = l1[i];
@@ -636,7 +641,7 @@ void gameplaypage()
 			else
 				consoleBuffer[30 + (((30 - strlen(l2)) / 2) + i) + screen_x * 15].Attributes = 7;
 		}
-		
+
 		for (size_t i = 0; i < strlen(l2); i++)
 		{
 			consoleBuffer[30 + (((30 - strlen(l2)) / 2) + i) + screen_x * 16].Char.AsciiChar = l2[i];
@@ -777,7 +782,7 @@ void menuascii()
 	for (size_t i = 0; i < strlen(a1); i++)
 	{
 		consoleBuffer[(28 + i) + screen_x * (py + 8)].Char.AsciiChar = a1[i];
-		consoleBuffer[(28 + i) + screen_x * (py + 8)].Attributes = 7;
+		consoleBuffer[(28 + i) + screen_x * (py + 8)].Attributes = 15;
 	}
 
 	for (size_t i = 0; i < strlen(start); i++)
@@ -825,7 +830,7 @@ void modepage()
 	for (size_t i = 0; i < strlen(b1); i++)
 	{
 		consoleBuffer[(((60 - strlen(b1)) / 2) + i) + screen_x * py].Char.AsciiChar = b1[i];
-		consoleBuffer[(((60 - strlen(b1)) / 2) + i) + screen_x * py].Attributes = 7;
+		consoleBuffer[(((60 - strlen(b1)) / 2) + i) + screen_x * py].Attributes = 10;
 	}
 
 	for (size_t i = 0; i < strlen(b2); i++)
@@ -871,7 +876,7 @@ void gameoverpage()
 	for (size_t i = 0; i < strlen(nchar); i++)
 	{
 		consoleBuffer[strlen(scoretext) + (((60 - (strlen(scoretext) + strlen(nchar))) / 2) + i) + screen_x * (py + 0)].Char.AsciiChar = nchar[i];
-		consoleBuffer[strlen(scoretext) + (((60 - (strlen(scoretext) + strlen(nchar))) / 2) + i) + screen_x * (py + 0)].Attributes = 7;
+		consoleBuffer[strlen(scoretext) + (((60 - (strlen(scoretext) + strlen(nchar))) / 2) + i) + screen_x * (py + 0)].Attributes = 10;
 	}
 
 	for (size_t i = 0; i < strlen(text3); i++)
@@ -941,4 +946,3 @@ void howtoplaypage()
 		consoleBuffer[(((60 - strlen(line7)) / 2) + i) + screen_x * (py + 20)].Attributes = 7;
 	}
 }
-//x
