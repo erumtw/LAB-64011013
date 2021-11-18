@@ -941,3 +941,4 @@ void howtoplaypage()
 		consoleBuffer[(((60 - strlen(line7)) / 2) + i) + screen_x * (py + 20)].Attributes = 7;
 	}
 }
+//x
