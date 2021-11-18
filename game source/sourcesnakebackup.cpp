@@ -42,7 +42,7 @@ void fill_oji();
 void oji_move();
 void board();
 void eatcheck();
-void addbody();
+void addtail();
 void setcursor(bool);
 void selfhits();
 void game_setup();
@@ -73,7 +73,7 @@ directions dir;
 
 bool GameOn = true, mainmenu, modemenu, normalMode, obstructMode, play, Gameover = false, howtoplay;
 float speed;
-int score, obHighscore;
+int HP, score, obHighscore;
 int mainpy = 15, modepy = 11, gameoverpy = 16;
 enum itemlist {SLOWER, ADDHP, SHORTER, DEWALL};
 itemlist items;
@@ -142,6 +142,7 @@ void game_setup()
 	normalMode = false;
 	obstructMode = false;
 	wallstat = false;
+	HP = 2;
 	foodcount = 1;
 	wallcount = 0;
 	atefood = 3;
@@ -159,7 +160,7 @@ void game_setup()
 void normalModegame()
 {
 	control_setting(); // w a s d f
-	addbody();
+	addtail();
 	clear_buffer(); // clear
 	scorecount();
 	gameplaypage();
@@ -449,50 +450,90 @@ void oji_move()
 			oji[0] = { oji[0].X, oji[0].Y - 1 };
 			Sleep(speed / 2);
 		}
-		else {
-			Sleep(250);
-			Gameover = true;
-			normalMode = false;
-			play = false;
-			//game_setup();
+		else if (oji[0].Y <= 1 && HP > 1)
+		{
+			HP--;
+			oji[0].Y = 23;
+		}
+		else if (oji[0].Y <= 1 && HP <= 1)
+		{
+			HP--;
+			if (HP == 0) {
+				Sleep(100);
+				Gameover = true;
+				normalMode = false;
+				play = false;
+				//game_setup();
+			}
 		}
 	}
 	else if (dir == DOWN) {
-		if (oji[0].Y < height - 2)
+		if (oji[0].Y < 23)
 		{
-			oji[0] = { oji[0].X, oji[0].Y + 1 };
+			oji[0].Y += 1;
 			Sleep(speed / 2);
 		}
-		else {
-			Sleep(250);
-			Gameover = true;
-			normalMode = false;
-			play = false;
-			//game_setup();
+		else if (oji[0].Y >= 23 && HP > 1)
+		{
+			HP--;
+			oji[0].Y = 1;
+		}
+		else if (oji[0].Y >= 23 && HP <= 1)
+		{
+			HP--;
+			if (HP == 0) {
+				Sleep(100);
+				Gameover = true;
+				normalMode = false;
+				play = false;
+				//game_setup();
+			}
 		}
 	}
 
 	else if (dir == LEFT) {
-		if (oji[0].X > 1)
-			oji[0] = { oji[0].X - 1, oji[0].Y };
-		else {
-			Sleep(250);
-			Gameover = true;
-			normalMode = false;
-			play = false;
-			//game_setup();
+		if(oji[0].X > 1)
+		{
+			oji[0].X -= 1;
+		}
+		else if (oji[0].X <= 1 && HP > 1)
+		{
+			HP--;
+			oji[0].X = 28;
+		}
+		else if (oji[0].X <= 1 && HP <= 1)
+		{
+			HP--;
+			if (HP == 0) {
+				Sleep(100);
+				Gameover = true;
+				normalMode = false;
+				play = false;
+				//game_setup();
+			}
 		}
 	}
 
 	else if (dir == RIGHT) {
-		if (oji[0].X < width - 2)
-			oji[0] = { oji[0].X + 1, oji[0].Y };
-		else {
-			Sleep(250);
-			Gameover = true;
-			normalMode = false;
-			play = false;
-			//game_setup();
+		if (oji[0].X < width -2)
+		{
+			oji[0].X += 1;
+		}
+		else if (oji[0].X >= 28 && HP > 1)
+		{
+			HP--;
+			oji[0].X = 1;
+		}
+		else if (oji[0].X >= 28 && HP <= 1)
+		{
+			HP--;
+			if (HP == 0) {
+				Sleep(100);
+				Gameover = true;
+				normalMode = false;
+				play = false;
+				//game_setup();
+			}
 		}
 	}
 }
@@ -503,7 +544,7 @@ void board()
 	{
 		for (int j = 0; j < width; j++) // column
 		{
-			if (i == 0 || i == height - 1 || j == 0 || j == width - 1)
+			if (i == 0 || i == height - 1 || j == 0 || j == width - 1 )
 			{
 				consoleBuffer[j + screen_x * i].Char.AsciiChar = '#';
 				consoleBuffer[j + screen_x * i].Attributes = 10;
@@ -543,10 +584,14 @@ void eatcheck()
 	{
 		if (oji[0].X == wall[i].X && oji[0].Y == wall[i].Y)
 		{
-			play = false;
-			normalMode = false;
-			Gameover = true;
-			//game_setup();
+			HP--;
+			if (HP == 0)
+			{
+				play = false;
+				normalMode = false;
+				Gameover = true;
+				//game_setup();
+			}
 		}
 	}
 }
@@ -556,18 +601,22 @@ void selfhits()
 	{
 		if (oji[0].X == oji[i].X && oji[0].Y == oji[i].Y)
 		{
-			Sleep(250);
-			normalMode = false;
-			play = false;
-			Gameover = true;
-			//game_setup();
+			HP--;
+			if (HP == 0)
+			{
+				Sleep(250);
+				normalMode = false;
+				play = false;
+				Gameover = true;
+				//game_setup();
+			}
 		}
 	}
 
 }
 
 int fposX, fposY, sposX, sposY;
-void addbody()
+void addtail()
 {
 	if (dir != STOP)
 	{
@@ -609,6 +658,7 @@ void gameplaypage()
 	const char* l1 = "* = 10 point";
 	const char* l2 = "# = Obstruction / Wall";
 	const char* l3 = "? = Random item";
+
 	if (wallstat == false) // challenge mode
 	{
 		int py = 2;
@@ -712,22 +762,36 @@ void gameplaypage()
 
 void scorecount()
 {
-
 	const char* scoretext = "SCORE = ";
 	string s = to_string(score);
 	const char* nchar = s.c_str();
 	SHORT px = 39;
 	SHORT py = 9;
 
+	const char* health = "HP = ";
+	string h = to_string(HP);
+	const char* hchar = h.c_str();
+
 	for (size_t i = 0; i < strlen(scoretext); i++)
 	{
 		consoleBuffer[(px + i) + screen_x * py].Char.AsciiChar = scoretext[i];
 		consoleBuffer[(px + i) + screen_x * py].Attributes = 15;
 	}
-	for (size_t i = 0; i < 3; i++)
+	for (size_t i = 0; i < strlen(nchar); i++)
 	{
 		consoleBuffer[(47 + i) + screen_x * py].Char.AsciiChar = nchar[i];
 		consoleBuffer[(47 + i) + screen_x * py].Attributes = 2;
+	}
+
+	for (size_t i = 0; i < strlen(health); i++)
+	{
+		consoleBuffer[(px + i) + screen_x * (py + 1)].Char.AsciiChar = health[i];
+		consoleBuffer[(px + i) + screen_x * (py + 1)].Attributes = 15;
+	}
+	for (size_t i = 0; i < strlen(hchar); i++)
+	{
+		consoleBuffer[(44 + i) + screen_x * (py + 1)].Char.AsciiChar = hchar[i];
+		consoleBuffer[(44 + i) + screen_x * (py + 1)].Attributes = 4;
 	}
 }
 
